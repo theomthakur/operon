@@ -13,13 +13,31 @@ const V_STYLE: Record<string, string> = {
 };
 
 export default function Page() {
-  const rows = useMemo(() => checkAll(RECORDS), []);
+  const [resolvedTags, setResolvedTags] = useState<Set<string>>(new Set());
+  // The fix for a real conflict is not averaging the two numbers. It is
+  // adopting the P&ID as the authoritative document, since that is what a
+  // plant actually treats as the master reference, and re-running the same
+  // conversion check with every reading set to that value and unit.
+  const rows = useMemo(
+    () =>
+      checkAll(
+        RECORDS.map((rec) => {
+          if (!resolvedTags.has(rec.tag)) return rec;
+          const authoritative = rec.readings[0];
+          return { ...rec, readings: rec.readings.map((r) => ({ ...r, value: authoritative.value, unit: authoritative.unit })) };
+        })
+      ),
+    [resolvedTags]
+  );
   const [openId, setOpenId] = useState(
     rows.find((r) => r.verdict === "real conflict" && r.naiveVerdict === "consistent")!.record.tag
   );
   const open = rows.find((r) => r.record.tag === openId)!;
   const spurious = rows.filter((r) => r.verdict === "spurious conflict");
   const hidden = rows.filter((r) => r.verdict === "real conflict" && r.naiveVerdict === "consistent");
+  function resolveConflict(tag: string) {
+    setResolvedTags((prev) => new Set(prev).add(tag));
+  }
 
   return (
     <Shell>
@@ -64,7 +82,8 @@ export default function Page() {
           <span className="font-semibold text-bad">TI-3310 reads 350 in both documents and they do not agree.</span>{" "}
           One is degF, one is degC, a 98% gap on a reactor bed design temperature that looks
           identical on the page. Meanwhile {spurious.length} of {rows.length} tags flagged as
-          conflicts are not conflicts at all, just the same value in different units.
+          conflicts are not conflicts at all, just the same value in different units. Open TI-3310
+          below and resolve it to see the fix.
         </p>
       </div>
 
@@ -90,16 +109,17 @@ export default function Page() {
 
       <section className="mt-10">
         <div className="rule rounded-xl border p-5">
-          <Detail r={open} />
+          <Detail r={open} isResolved={resolvedTags.has(open.record.tag)} onResolve={() => resolveConflict(open.record.tag)} />
         </div>
       </section>
 
-      <Foot note={<>Built for Operon by Om Thakur. Every tag, document and value here is invented. Unit normalisation runs in <Code>lib/normalize.ts</Code> with no model in the loop.</>} />
+      <Foot note={<>Built for Operon by Om Thakur. Every tag, document and value here is invented. Unit normalisation and the resolve re-check both run in <Code>lib/normalize.ts</Code> with no model in the loop.</>} />
     </Shell>
   );
 }
 
-function Detail({ r }: { r: Checked }) {
+function Detail({ r, isResolved, onResolve }: { r: Checked; isResolved: boolean; onResolve: () => void }) {
+  const isRealConflict = r.verdict === "real conflict";
   return (
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -107,7 +127,7 @@ function Detail({ r }: { r: Checked }) {
           <p className="font-mono text-[15px] font-semibold">{r.record.tag}</p>
           <p className="text-[12.5px] text-ink-mid">{r.record.equipment} · {r.record.property}</p>
         </div>
-        <p className={`font-mono text-[12.5px] ${V_STYLE[r.verdict]}`}>{r.verdict}</p>
+        <p className={`font-mono text-[12.5px] ${V_STYLE[r.verdict]}`}>{isResolved ? "resolved" : r.verdict}</p>
       </div>
       <div className="mt-4 space-y-2">
         {r.normalized.map((n, i) => (
@@ -125,6 +145,24 @@ function Detail({ r }: { r: Checked }) {
         ))}
       </div>
       <p className="hair mt-3 rounded-lg border bg-base-raised p-3 text-[13px] leading-relaxed text-ink/80">{r.note}</p>
+      {isRealConflict && !isResolved && (
+        <div className="hair mt-3 rounded-lg border bg-bad/[0.05] p-3">
+          <p className="text-[13px] leading-relaxed text-ink/85">
+            <span className="font-semibold text-bad">Two documents genuinely disagree, and averaging them is not an answer.</span>{" "}
+            Adopting the P&amp;ID as the authoritative source and correcting every other document
+            to match it is the fix an engineer would actually make.
+          </p>
+          <button onClick={onResolve} className="mt-3 rounded-lg bg-accent px-3.5 py-2 text-[12.5px] font-medium text-base transition hover:opacity-85">
+            Adopt the P&amp;ID as authoritative &rarr;
+          </button>
+        </div>
+      )}
+      {isResolved && (
+        <p className="hair mt-3 rounded-lg border bg-good/[0.06] p-3 text-[13px] leading-relaxed text-ink/85">
+          <span className="font-semibold text-good">Resolved.</span> Every document now cites the
+          P&amp;ID value. A query against this tag returns one number, not three.
+        </p>
+      )}
     </div>
   );
 }
