@@ -1,0 +1,8 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root { color-scheme: dark; }
+body { background: #0B0C12; color: #E8EAF0; -webkit-font-smoothing: antialiased; }
+.rule { border-color: rgba(232,234,240,0.12); }
+.hair { border-color: rgba(232,234,240,0.06); }
