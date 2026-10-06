@@ -2,7 +2,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-:root { color-scheme: dark; }
-body { background: #0B0C12; color: #E8EAF0; -webkit-font-smoothing: antialiased; }
-.rule { border-color: rgba(232,234,240,0.12); }
-.hair { border-color: rgba(232,234,240,0.06); }
+:root { color-scheme: light; }
+body { background: #FFFFFF; color: #1A1A1A; -webkit-font-smoothing: antialiased; }
+.rule { border-color: #E4E5EA; }
+.hair { border-color: #EEEEF2; }

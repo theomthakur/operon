@@ -1,19 +1,35 @@
 import Link from "next/link";
 
 export function Shell({ children }: { children: React.ReactNode }) {
-  return <main className="mx-auto max-w-canvas px-6 pb-24 pt-10 sm:px-10">{children}</main>;
+  return <main className="mx-auto max-w-canvas px-5 pb-24 pt-8 sm:px-10">{children}</main>;
 }
 
-export function TopBar() {
+const NAV = [
+  { href: "/", label: "Overview" },
+  { href: "/try", label: "Try it" },
+  { href: "/architecture", label: "How it works" },
+  { href: "/files", label: "Files" },
+];
+
+export function TopBar({ active }: { active?: string }) {
   return (
-    <header className="flex items-center justify-between">
-      <Link href="/" className="flex items-center gap-3">
+    <header className="flex flex-wrap items-center justify-between gap-3">
+      <Link href="/" className="flex items-center gap-2.5">
         <Mark />
         <span className="text-[15px] font-semibold tracking-tight">Same Tag</span>
+        <span className="hidden rounded-full bg-base-raised px-2.5 py-0.5 text-[11px] text-ink-mid sm:inline">a demo for Operon</span>
       </Link>
-      <Link href="/architecture" className="text-[13px] text-ink-mid transition hover:text-accent">
-        How it works
-      </Link>
+      <nav className="flex flex-wrap gap-1">
+        {NAV.map((n) => (
+          <Link
+            key={n.href}
+            href={n.href}
+            className={`rounded-full px-3.5 py-1.5 text-[13px] transition ${active === n.href ? "bg-accent text-white" : "text-ink-mid hover:bg-base-raised hover:text-ink"}`}
+          >
+            {n.label}
+          </Link>
+        ))}
+      </nav>
     </header>
   );
 }
@@ -24,7 +40,7 @@ export function Foot({ note }: { note: React.ReactNode }) {
       <p className="max-w-2xl">{note}</p>
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
         <a className="inline-flex items-center gap-1.5 transition hover:text-accent" href="https://theomthakur.github.io/portfolio"><PortfolioIcon />Portfolio</a>
-        <a className="inline-flex items-center gap-1.5 transition hover:text-accent" href="https://github.com/theomthakur"><GithubIcon />GitHub</a>
+        <a className="inline-flex items-center gap-1.5 transition hover:text-accent" href="https://github.com/theomthakur/operon"><GithubIcon />Source</a>
         <a className="inline-flex items-center gap-1.5 transition hover:text-accent" href="https://www.linkedin.com/in/theomthakur/"><LinkedinIcon />LinkedIn</a>
         <Link className="inline-flex items-center gap-1.5 transition hover:text-accent" href="/architecture"><ArchIcon />How it works</Link>
       </div>
@@ -35,21 +51,33 @@ export function Foot({ note }: { note: React.ReactNode }) {
 export function Sect({ n, t }: { n: string; t: string }) {
   return (
     <div className="flex items-baseline gap-3">
-      <span className="font-mono text-[11px] text-accent">{n}</span>
-      <h2 className="text-[15px] font-semibold tracking-tight">{t}</h2>
+      <span className="font-mono text-[11px] font-medium text-accent">{n}</span>
+      <h2 className="text-[16px] font-semibold tracking-tight">{t}</h2>
     </div>
   );
 }
 
 export function Code({ children }: { children: React.ReactNode }) {
-  return <code className="rounded bg-ink/10 px-1.5 py-0.5 font-mono text-[11px] text-ink/80">{children}</code>;
+  return <code className="rounded bg-base-sunk px-1.5 py-0.5 font-mono text-[11.5px] text-ink">{children}</code>;
+}
+
+export const VERDICT_STYLE: Record<string, string> = {
+  consistent: "text-good bg-good/10",
+  "spurious conflict": "text-warn bg-warn/10",
+  "real conflict": "text-bad bg-bad/10",
+  "needs review": "text-accent bg-accent-soft",
+  conflict: "text-warn bg-warn/10",
+};
+
+export function Pill({ v, label }: { v: string; label?: string }) {
+  return <span className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 font-mono text-[11px] ${VERDICT_STYLE[v] ?? ""}`}>{label ?? v}</span>;
 }
 
 export function Mark({ className = "h-6 w-6" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
-      <path d="M5 8h9a4 4 0 010 8H5" stroke="#FB651E" strokeWidth="1.7" strokeLinecap="round" />
-      <path d="M9 4h9a4 4 0 010 8H9" stroke="#E8EAF0" strokeWidth="1.7" strokeLinecap="round" opacity="0.28" />
+      <circle cx="7" cy="12" r="4" fill="#1F3ACB" />
+      <circle cx="17" cy="12" r="4" fill="#1F3ACB" opacity="0.35" />
     </svg>
   );
 }
